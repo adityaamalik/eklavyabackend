@@ -19,6 +19,7 @@ const questionSchema = mongoose.Schema({
   answers: [
     {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Answer",
     },
   ],
 

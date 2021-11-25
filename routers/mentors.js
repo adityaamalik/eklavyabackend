@@ -3,13 +3,28 @@ const { Mentee } = require("../models/mentee");
 const { Category } = require("../models/category");
 const { Invite } = require("../models/invite");
 const { Answer } = require("../models/answer");
-
 const express = require("express");
 const { Meeting } = require("../models/meeting");
 const { Question } = require("../models/question");
 const router = express.Router();
 const mongoose = require("mongoose");
 const { Badge } = require("../models/badge");
+const fs = require("fs");
+const path = require("path");
+const multer = require("multer");
+const _ = require("lodash");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "public/uploads");
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.fieldname + "-" + Date.now());
+  },
+});
+
+const uploadOptions = multer({ storage: storage });
+
 router.get(`/`, async (req, res) => {
   const mentorList = await Mentor.find().select("-password");
   if (!mentorList) {
@@ -49,6 +64,15 @@ router.get("/invite/:id", async (req, res) => {
     res.json({ success: false });
   }
   res.send(inviteList);
+});
+
+router.get("/QA/:id", async (req, res) => {
+  const questionid = mongoose.Types.ObjectId(req.body.question);
+  Question.findOne({ _id: questionid })
+    .populate("answers") // key to populate
+    .then((user) => {
+      res.json(user);
+    });
 });
 
 router.get(`/mentee/:id`, async (req, res) => {
@@ -95,9 +119,15 @@ router.get("/answer/:id", async (req, res) => {
   }
   res.send(answerList);
 });
-router.post("/category", async (req, res) => {
+router.post("/category", uploadOptions.single("image"), async (req, res) => {
   let category = new Category({
     name: req.body.name,
+    image: {
+      data: fs.readFileSync(
+        path.join(__dirname + "//../public/uploads/" + req.file.filename)
+      ),
+      contentType: "image/png",
+    },
   });
   category = await category.save();
   if (!category) return res.send("the category cannot be created!");
@@ -128,22 +158,6 @@ router.post("/meeting/:id", async (req, res) => {
   if (!meeting) return res.send("the Meeting cannot be created!");
   res.send(meeting);
 });
-
-// router.post("/invite/:id", async (req, res) => {
-//   const menteeid = mongoose.Types.ObjectId(req.body.mentee);
-//   const mentorid = mongoose.Types.ObjectId(req.params.id);
-
-//   const today = Date.now();
-//   let invite = new Invite({
-//     message: req.body.message,
-//     mentee: menteeid,
-//     mentor: mentorid,
-//     date: today,
-//   });
-//   invite = await invite.save();
-//   if (!invite) return res.send("the Invite cannot be created!");
-//   res.send(invite);
-// });
 
 router.post("/register", async (req, res) => {
   console.log(req.body);
@@ -270,7 +284,7 @@ router.post("/answers/:id", async (req, res) => {
   }
 });
 
-router.post("/badges/:id", async (req, res) => {
+router.post("/badges/:id", uploadOptions.single("image"), async (req, res) => {
   const mentorid = mongoose.Types.ObjectId(req.params.id);
   const mentorobj = await Mentor.findById(mentorid);
   const coins = mentorobj.totalCoins;
@@ -294,7 +308,14 @@ router.post("/badges/:id", async (req, res) => {
       value: req.body.value,
       mentor: req.body.params,
       date: today,
+      image: {
+        data: fs.readFileSync(
+          path.join(__dirname + "//../public/uploads/" + req.file.filename)
+        ),
+        contentType: "image/png",
+      },
     });
+    console.log(badge);
     badge = await badge.save();
     if (!badge) return res.send("the answer cannot be created!");
     res.send(badge);
@@ -362,6 +383,15 @@ router.put("/:id", async (req, res) => {
   });
   if (!mentor) return res.send("the mentor cannot be updated!");
   res.send(mentor);
+});
+
+router.delete("/meeting/:id", async (req, res) => {
+  const meetingid = req.body.meeting;
+  const meetingList = await Meeting.findByIdAndDelete(meetingid);
+  if (!meetingList) {
+    res.json({ success: false });
+  }
+  res.send("deleted");
 });
 
 module.exports = router;

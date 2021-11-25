@@ -24,6 +24,28 @@ router.get("/:id", async (req, res) => {
   res.send(mentee);
 });
 
+router.get("/query/:id", async (req, res) => {
+  const categoryid = mongoose.Types.ObjectId(req.body.category);
+  let filter = {};
+  if (req.params.id) {
+    category = { category: categoryid };
+  }
+  const questionList = await Question.find(filter).sort({ date: -1 });
+  if (!questionList) {
+    res.json({ success: false });
+  }
+  res.send(questionList);
+});
+
+router.get("/QA/:id", async (req, res) => {
+  const questionid = mongoose.Types.ObjectId(req.body.question);
+  Question.findOne({ _id: questionid })
+    .populate("answers") // key to populate
+    .then((user) => {
+      res.json(user);
+    });
+});
+
 router.get("/badges/:id", async (req, res) => {
   let filter = {};
   if (req.params.id) {
@@ -198,10 +220,10 @@ router.put("/skills/:id", async (req, res) => {
 // for achievements
 router.put("/achievements/:id", async (req, res) => {
   const menteeA = await Mentee.findById(req.params.id);
-  const achievementsArray = menteeA.achivemenets;
-  achievementsArray.push(req.body.achivemenets);
+  const achievementsArray = menteeA.achievements;
+  achievementsArray.push(req.body.achievement);
   let params = {
-    achivemenets: achievementsArray,
+    achievements: achievementsArray,
   };
   for (let prop in params) if (!params[prop]) delete params[prop];
   const mentee = await Mentee.findByIdAndUpdate(req.params.id, params, {
@@ -324,6 +346,15 @@ router.put("/:id", async (req, res) => {
 
   if (!mentee) return res.send("the mentee cannot be updated!");
   res.send(mentee);
+});
+
+router.delete("/meeting/:id", async (req, res) => {
+  const meetingid = req.body.meeting;
+  const meetingList = await Meeting.findByIdAndDelete(meetingid);
+  if (!meetingList) {
+    res.json({ success: false });
+  }
+  res.send("deleted");
 });
 
 module.exports = router;
