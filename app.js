@@ -9,6 +9,8 @@ app.use(cors());
 app.options("*", cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
+const authJwt = require("./helpers/jwt");
+const errorHandler = require("./helpers/error-handler");
 mongoose
   .connect(process.env.CONNECTION_STRING, {
     useNewUrlParser: true,
@@ -22,6 +24,8 @@ const mentorsRouter = require("./routers/mentors");
 const menteesRouter = require("./routers/mentees");
 
 //routes
+app.use(authJwt());
+app.use(errorHandler);
 app.use("/mentors", mentorsRouter);
 app.use("/mentees", menteesRouter);
 

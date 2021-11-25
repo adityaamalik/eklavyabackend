@@ -13,6 +13,8 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const _ = require("lodash");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -160,18 +162,48 @@ router.post("/meeting/:id", async (req, res) => {
 });
 
 router.post("/register", async (req, res) => {
-  console.log(req.body);
+  const secret = process.env.secret;
+
   const categoryid = mongoose.Types.ObjectId(req.body.category);
   let mentor = new Mentor({
     email: req.body.email,
-    password: req.body.password,
+    password: bcrypt.hashSync(req.body.password, 10),
     name: req.body.name,
     profileurl: req.body.profileurl,
     category: categoryid,
   });
   mentor = await mentor.save();
   if (!mentor) return res.send("the mentor cannot be created!");
-  res.status(200).send(mentor);
+  const token = jwt.sign(
+    {
+      email: req.body.email,
+    },
+    secret,
+    { expiresIn: "1d" }
+  );
+  res.status(200).send({ mentor: mentor, token: token });
+});
+
+router.post("/login", async (req, res) => {
+  const mentor = await Mentor.findOne({ email: req.body.email });
+  const secret = process.env.secret;
+  if (!mentor) {
+    return res.status(400).send("The mentor not found");
+  }
+
+  if (mentor && bcrypt.compareSync(req.body.password, mentor.password)) {
+    const token = jwt.sign(
+      {
+        mentorid: mentor._id,
+      },
+      secret,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).send({ mentor: mentor, token: token });
+  } else {
+    res.status(400).send("password is wrong!");
+  }
 });
 
 router.put("/invite/accept/:id", async (req, res) => {

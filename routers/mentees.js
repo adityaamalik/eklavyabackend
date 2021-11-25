@@ -6,6 +6,8 @@ const { Meeting } = require("../models/meeting");
 const { Question } = require("../models/question");
 const router = express.Router();
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 router.get(`/`, async (req, res) => {
   const menteeList = await Mentee.find().select("-password");
@@ -190,16 +192,45 @@ router.post("/invite/:id", async (req, res) => {
   res.send(invite);
 });
 
+router.post("/login", async (req, res) => {
+  const mentee = await Mentee.findOne({ email: req.body.email });
+  const secret = process.env.secret;
+  if (!mentee) {
+    return res.status(400).send("The mentee not found");
+  }
+
+  if (mentee && bcrypt.compareSync(req.body.password, mentee.password)) {
+    const token = jwt.sign(
+      {
+        menteeid: mentee._id,
+      },
+      secret,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).send({ mentee: mentee, token: token });
+  } else {
+    res.status(400).send("password is wrong!");
+  }
+});
+
 router.post("/register", async (req, res) => {
-  console.log(req.body);
+  const secret = process.env.secret;
   let mentee = new Mentee({
     email: req.body.email,
-    password: req.body.password,
+    password: bcrypt.hashSync(req.body.password, 10),
     name: req.body.name,
   });
   mentee = await mentee.save();
   if (!mentee) return res.send("the mentee cannot be created!");
-  res.status(200).send(mentee);
+  const token = jwt.sign(
+    {
+      email: req.body.email,
+    },
+    secret,
+    { expiresIn: "1d" }
+  );
+  res.status(200).send({ mentee: mentee, token: token });
 });
 
 // for skills
