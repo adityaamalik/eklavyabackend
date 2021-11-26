@@ -24,10 +24,10 @@ const mentorsRouter = require("./routers/mentors");
 const menteesRouter = require("./routers/mentees");
 
 //routes
-app.use(authJwt());
-app.use(errorHandler);
-app.use("/mentors", mentorsRouter);
-app.use("/mentees", menteesRouter);
+// app.use(authJwt());
+// app.use(errorHandler);
+app.use("/mentor", mentorsRouter);
+app.use("/mentee", menteesRouter);
 
 app.get("/", (req, res) => {
   res.send("API working fine !");
