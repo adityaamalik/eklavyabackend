@@ -9,11 +9,12 @@ function authJwt() {
     // isRevoked: isRevoked
   }).unless({
     path: [
-      `/mentees/login`,
-      `/mentees/register`,
+      `/mentee/login`,
+      `/mentee/register`,
       `/`,
-      `/mentors/login`,
-      `/mentors/register`,
+      `/mentor/login`,
+      `/mentor/register`,
+      `/mentor/category/6198e265da2c0d17668aec19`,
     ],
   });
 }

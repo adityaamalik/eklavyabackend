@@ -196,7 +196,7 @@ router.post("/login", async (req, res) => {
   const mentee = await Mentee.findOne({ email: req.body.email });
   const secret = process.env.secret;
   if (!mentee) {
-    return res.status(400).send("The mentee not found");
+    return res.send("email incorrect");
   }
 
   if (mentee && bcrypt.compareSync(req.body.password, mentee.password)) {
@@ -210,7 +210,7 @@ router.post("/login", async (req, res) => {
 
     res.status(200).send({ mentee: mentee, token: token });
   } else {
-    res.status(400).send("password is wrong!");
+    res.send("password incorrect");
   }
 });
 

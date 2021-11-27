@@ -231,7 +231,7 @@ router.post("/login", async (req, res) => {
 
     res.status(200).send({ mentor: mentor, token: token });
   } else {
-    res.status(400).send("password is wrong!");
+    res.status(400).send("password incorrect");
   }
 });
 
