@@ -121,6 +121,7 @@ router.get("/answer/:id", async (req, res) => {
   }
   res.send(answerList);
 });
+
 router.post("/category", uploadOptions.single("image"), async (req, res) => {
   let category = new Category({
     name: req.body.name,
@@ -137,12 +138,40 @@ router.post("/category", uploadOptions.single("image"), async (req, res) => {
   res.send(category);
 });
 
-router.get("/category", async (req, res) => {
+router.get("/category/:id", async (req, res) => {
   let categories = await Category.find();
 
   if (!categories) res.send("error");
 
   res.send(categories);
+});
+
+router.get("/mentors/:id", async (req, res) => {
+  const category = mongoose.Types.ObjectId(req.params.category);
+  console.log(req.params);
+  let filter = {};
+  if (req.params.id) {
+    filter = { category: req.params.id };
+  }
+  const mentorsList = await Mentor.find(filter);
+  if (!mentorsList) {
+    res.json({ success: false });
+  }
+  res.send(mentorsList);
+});
+
+router.get("/questionList/:id", async (req, res) => {
+  const category = mongoose.Types.ObjectId(req.params.category);
+  console.log(req.params);
+  let filter = {};
+  if (req.params.id) {
+    filter = { category: req.params.id };
+  }
+  const questionList = await Question.find(filter);
+  if (!questionList) {
+    res.json({ success: false });
+  }
+  res.send(questionList);
 });
 
 router.post("/meeting/:id", async (req, res) => {
