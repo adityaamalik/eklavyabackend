@@ -7,9 +7,11 @@ const inviteSchema = mongoose.Schema({
   },
   mentor: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "Mentor",
   },
   mentee: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "Mentee",
   },
 
   date: {

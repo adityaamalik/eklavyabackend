@@ -62,12 +62,20 @@ router.get("/badges/:id", async (req, res) => {
 
 router.get(`/mentor/:id`, async (req, res) => {
   Mentee.findOne({ _id: req.params.id })
-    .populate({
-      path: "mentors",
-      populate: {
-        path: "mentor",
+    .populate(
+      {
+        path: "mentors",
+        populate: {
+          path: "mentor",
+        },
       },
-    })
+      {
+        path: "mentors",
+        populate: {
+          path: "class",
+        },
+      }
+    )
     .then((user) => {
       res.json(user);
     });
@@ -78,11 +86,12 @@ router.get("/invite/:id", async (req, res) => {
   if (req.params.id) {
     filter = { mentee: req.params.id };
   }
-  const inviteList = await Invite.find(filter).sort({ date: -1 });
-  if (!inviteList) {
-    res.json({ success: false });
-  }
-  res.send(inviteList);
+
+  Invite.find(filter)
+    .populate("mentor mentee")
+    .then((user) => {
+      res.json(user);
+    });
 });
 
 // mentors can only send invite
@@ -210,6 +219,7 @@ router.post("/login", async (req, res) => {
 
     res.status(200).send({ mentee: mentee, token: token });
   } else {
+    console.log("d");
     res.send("password incorrect");
   }
 });
