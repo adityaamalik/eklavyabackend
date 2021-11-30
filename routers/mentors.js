@@ -36,12 +36,11 @@ router.get(`/`, async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const mentor = await Mentor.findById(req.params.id).select("-password");
-
-  if (!mentor) {
-    res.json({ message: "The Mentor with the given ID was not found." });
-  }
-  res.send(mentor);
+  Mentor.findOne({ _id: req.params.id })
+    .populate("mentees") // key to populate
+    .then((user) => {
+      res.json(user);
+    });
 });
 
 router.get("/badges/:id", async (req, res) => {
@@ -238,11 +237,12 @@ router.post("/login", async (req, res) => {
 router.put("/invite/accept/:id", async (req, res) => {
   const inviteid = mongoose.Types.ObjectId(req.body.invite);
   const inviteis = await Invite.findById(inviteid);
+  console.log(inviteis);
   const mentorid = mongoose.Types.ObjectId(req.params.id);
   const mentorobj = await Mentor.findById(mentorid);
   const menteeArray = mentorobj.mentees;
 
-  menteeArray.push(mongoose.Types.ObjectId(req.body.mentee));
+  menteeArray.push(mongoose.Types.ObjectId(inviteis.mentee));
   let params = {
     mentees: menteeArray,
   };
@@ -257,7 +257,7 @@ router.put("/invite/accept/:id", async (req, res) => {
   const mentorArray = menteeobj.mentors;
   const objofmetee = {
     category: mongoose.Types.ObjectId(mentorobj.category),
-    mentor: menteeid,
+    mentor: mentorid,
   };
 
   mentorArray.push(objofmetee);
@@ -348,13 +348,15 @@ router.post("/answers/:id", async (req, res) => {
 router.post("/badges/:id", uploadOptions.single("image"), async (req, res) => {
   const mentorid = mongoose.Types.ObjectId(req.params.id);
   const mentorobj = await Mentor.findById(mentorid);
-  const coins = mentorobj.totalCoins;
 
+  let coins = mentorobj.totalCoins;
+  console.log(coins);
+  let coinss = coins;
   if (coins.current - req.body.value > 0) {
-    coins.current = coins.current - req.body.value;
+    coinss.current = coinss.current - req.body.value;
 
     let params = {
-      totalCoins: coins,
+      totalCoins: coinss,
     };
 
     for (let prop in params) if (!params[prop]) delete params[prop];
@@ -367,7 +369,8 @@ router.post("/badges/:id", uploadOptions.single("image"), async (req, res) => {
       name: req.body.question,
       description: req.body.description,
       value: req.body.value,
-      mentor: req.body.params,
+      mentor: req.params.id,
+      mentee: mongoose.Types.ObjectId(req.body.mentee),
       date: today,
       image: {
         data: fs.readFileSync(
@@ -376,6 +379,23 @@ router.post("/badges/:id", uploadOptions.single("image"), async (req, res) => {
         contentType: "image/png",
       },
     });
+
+    const value = req.body.value;
+    const menteeid = mongoose.Types.ObjectId(req.body.mentee);
+    const menteeobj = await Mentee.findById(menteeid);
+    const coins = menteeobj.totalCoins;
+    coins.current = coins.current + parseInt(value);
+    coins.total = coins.total + parseInt(value);
+
+    params = {
+      totalCoins: coins,
+    };
+
+    for (let prop in params) if (!params[prop]) delete params[prop];
+    const mentee = await Mentee.findByIdAndUpdate(menteeid, params, {
+      new: true,
+    });
+
     console.log(badge);
     badge = await badge.save();
     if (!badge) return res.send("the answer cannot be created!");

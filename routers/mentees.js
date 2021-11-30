@@ -8,6 +8,7 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const { Badge } = require("../models/badge");
 
 router.get(`/`, async (req, res) => {
   const menteeList = await Mentee.find().select("-password");
@@ -15,15 +16,6 @@ router.get(`/`, async (req, res) => {
     res.json({ success: false });
   }
   res.send(menteeList);
-});
-
-router.get("/:id", async (req, res) => {
-  const mentee = await Mentee.findById(req.params.id).select("-password");
-
-  if (!mentee) {
-    res.json({ message: "The Mentee with the given ID was not found." });
-  }
-  res.send(mentee);
 });
 
 router.get("/query/:id", async (req, res) => {
@@ -53,29 +45,29 @@ router.get("/badges/:id", async (req, res) => {
   if (req.params.id) {
     filter = { mentee: req.params.id };
   }
-  const BadgeList = await Badge.find(filter).sort({ date: -1 });
-  if (!BadgeList) {
-    res.json({ success: false });
-  }
-  res.send(BadgeList);
+  Badge.find(filter)
+    .populate("mentor mentee")
+    .then((user) => {
+      res.json(user);
+    });
 });
 
-router.get(`/mentor/:id`, async (req, res) => {
+router.get("/:id", async (req, res) => {
   Mentee.findOne({ _id: req.params.id })
-    .populate(
-      {
-        path: "mentors",
-        populate: {
+    .populate({
+      path: "mentors",
+      populate: [
+        {
           path: "mentor",
+          model: "Mentor",
         },
-      },
-      {
-        path: "mentors",
-        populate: {
-          path: "class",
+
+        {
+          path: "catedgory",
+          model: "Category",
         },
-      }
-    )
+      ],
+    })
     .then((user) => {
       res.json(user);
     });
@@ -94,55 +86,16 @@ router.get("/invite/:id", async (req, res) => {
     });
 });
 
-// mentors can only send invite
-// router.put("/invite/accept/:id", async (req, res) => {
-//   const menteeid = mongoose.Types.ObjectId(req.params.id);
-//   const menteeobj = await Mentee.findById(menteeid);
-//   const classArray = menteeobj.class;
-
-//   classArray.push(mongoose.Types.ObjectId(req.body.class));
-//   let params = {
-//     class: classArray,
-//   };
-//   for (let prop in params) if (!params[prop]) delete params[prop];
-//   const mentee = await Mentee.findByIdAndUpdate(req.params.id, params, {
-//     new: true,
-//   });
-
-//   const classid = mongoose.Types.ObjectId(req.body.class);
-//   const classobj = await Class.findById(classid);
-//   const menteeArray = classobj.mentee;
-//   menteeArray.push(req.params.id);
-//   params = {
-//     mentee: menteeArray,
-//   };
-//   for (let prop in params) if (!params[prop]) delete params[prop];
-//   const classa = await Class.findByIdAndUpdate(classid, params, {
-//     new: true,
-//   });
-
-//   try {
-//     const inviteid = mongoose.Types.ObjectId(req.body.invite);
-//     const invite = await Invite.findByIdAndDelete(inviteid);
-//     if (!invite) {
-//       return res.status(404).send();
-//     }
-//     res.send("invite accepted");
-//   } catch (error) {
-//     res.status(500).send(error);
-//   }
-// });
-
 router.get("/meeting/:id", async (req, res) => {
   let filter = {};
   if (req.params.id) {
     filter = { mentee: req.params.id };
   }
-  const meetingList = await Meeting.find(filter).sort({ date: -1 });
-  if (!meetingList) {
-    res.json({ success: false });
-  }
-  res.send(meetingList);
+  Meeting.find(filter)
+    .populate("mentor mentee")
+    .then((user) => {
+      res.json(user);
+    });
 });
 
 router.get("/question/:id", async (req, res) => {

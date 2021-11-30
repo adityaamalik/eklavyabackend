@@ -6,9 +6,11 @@ const meetingSchema = mongoose.Schema({
   },
   mentee: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "Mentee",
   },
   mentor: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "Mentor",
   },
   url: {
     type: String,
