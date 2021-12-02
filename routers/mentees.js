@@ -234,7 +234,7 @@ router.post("/answers/:id", async (req, res) => {
     let answer = new Answer({
         answer: req.body.answer,
         answeredby: menteeid,
-        date: req.body.date,
+        date: new Date(),
     });
     answer = await answer.save();
     if (!answer) return res.send("the answer cannot be created!");
