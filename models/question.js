@@ -28,6 +28,7 @@ const questionSchema = mongoose.Schema({
   },
   reseloved: {
     type: Boolean,
+    default: false,
   },
 });
 

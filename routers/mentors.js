@@ -292,10 +292,26 @@ router.put("/skills/:id", async (req, res) => {
 // for achievements
 router.put("/achievements/:id", async (req, res) => {
   const mentorA = await Mentor.findById(req.params.id);
-  const achievementsArray = mentorA.achivemenets;
-  achievementsArray.push(req.body.achivemenets);
+  console.log(mentorA);
+  const achievementsArray = mentorA.achievements;
+  achievementsArray.push(req.body.achievements);
   let params = {
-    achivemenets: achievementsArray,
+    achievements: achievementsArray,
+  };
+  for (let prop in params) if (!params[prop]) delete params[prop];
+  const mentor = await Mentor.findByIdAndUpdate(req.params.id, params, {
+    new: true,
+  });
+  if (!mentor) return res.send("the skills cannot be updated!");
+  res.send(mentor);
+});
+
+router.put("/reviews/:id", async (req, res) => {
+  const mentorA = await Mentor.findById(req.params.id);
+  const reviewArray = mentorA.review;
+  reviewArray.push(req.body.review);
+  let params = {
+    review: reviewArray,
   };
   for (let prop in params) if (!params[prop]) delete params[prop];
   const mentor = await Mentor.findByIdAndUpdate(req.params.id, params, {
@@ -446,8 +462,8 @@ router.put("/:id", async (req, res) => {
   let params = {
     email: req.body.email,
     name: req.body.name,
-    qualifications: req.body.a,
-    profileHeading: req.body.a,
+    qualifications: req.body.qualifications,
+    profileHeading: req.body.profileHeading,
     profileDescription: req.body.profileDescription,
   };
   for (let prop in params) if (!params[prop]) delete params[prop];
@@ -474,5 +490,11 @@ router.delete("/meeting/:id", async (req, res) => {
   }
   res.send("deleted");
 });
-
+router.delete("/invite/:id", async (req, res) => {
+  const invite = await Invite.findByIdAndDelete(req.params.id);
+  if (!invite) {
+    res.json({ success: false });
+  }
+  res.send("deleted");
+});
 module.exports = router;
