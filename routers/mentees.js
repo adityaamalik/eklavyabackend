@@ -273,7 +273,6 @@ router.post("/answers/:id", async (req, res) => {
     const question = await Question.findById(questionid);
     const answerArray = question.answers;
 
-<<<<<<< HEAD
     answerArray.push(answerid);
     let params = {
       answers: answerArray,
@@ -281,12 +280,6 @@ router.post("/answers/:id", async (req, res) => {
     for (let prop in params) if (!params[prop]) delete params[prop];
     const questiona = await Question.findByIdAndUpdate(questionid, params, {
       new: true,
-=======
-    let answer = new Answer({
-        answer: req.body.answer,
-        answeredby: menteeid,
-        date: new Date(),
->>>>>>> 815ced8fb12ff310f7ca689bacf3cdc872044618
     });
     if (!questiona) return res.send("cannot be updated!");
     res.send(answer);
