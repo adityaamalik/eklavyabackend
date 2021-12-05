@@ -11,8 +11,11 @@ const bcrypt = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const { Badge } = require("../models/badge");
 const { Mentor } = require("../models/mentor");
+
 require("dotenv/config");
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 router.get(`/`, async (req, res) => {
   const menteeList = await Mentee.find().select("-password").sort({ date: -1 });
   if (!menteeList) {
@@ -170,38 +173,38 @@ router.post("/meeting/:id", async (req, res) => {
   if (!meeting) return res.send("the meeting cannot be created!");
   const mentor = await Mentor.findById(mentorid);
   const mentee = await Mentee.findById(menteeid);
-  // console.log(mentor.email);
-  // console.log(mentee);
-  // if (meeting) {
-  //   const msg = {
-  //     to: mentor.email, // Change to your recipient
-  //     from: "docsrecordmail@gmail.com", // Change to your verified sender
-  //     subject: "Meeting Inviation by " + mentee.name,
-  //     html: `
-  //     <div>
-  //       Hello ${mentor.name},
-  //       <br />
-  //       <br />
-  //       Message <strong> ${req.body.message}.</strong>
-  //       <br />
-  //       <br />
-  //       Date <strong> ${req.body.date}.</strong>
-  //       <br />
-  //       <br />
-  //       Link <strong> ${req.body.url}.</strong>
-  //       <br />
-  //       Have a Great day. Regards.
-  //     </div>`,
-  //   };
-  //   sgMail
-  //     .send(msg)
-  //     .then(() => {
-  //       console.log("Email sent");
-  //     })
-  //     .catch((error) => {
-  //       console.error(error);
-  //     });
-  // }
+  console.log(mentor.email);
+  console.log(mentee);
+  if (meeting) {
+    const msg = {
+      to: mentor.email, // Change to your recipient
+      from: "aditya.malik.cs.2018@miet.ac.in", // Change to your verified sender
+      subject: "Eklavya : Meeting Inviation by " + mentee.name,
+      html: `
+      <div>
+        Hello ${mentor.name},
+        <br />
+        <br />
+        Message <strong> ${req.body.message}.</strong>
+        <br />
+        <br />
+        Date <strong> ${req.body.date}.</strong>
+        <br />
+        <br />
+        Link <strong> ${req.body.url}.</strong>
+        <br />
+        Have a Great day. Regards, Eklavya Team.
+      </div>`,
+    };
+    sgMail
+      .send(msg)
+      .then(() => {
+        console.log("Email sent");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
   res.send(meeting);
 });
 
