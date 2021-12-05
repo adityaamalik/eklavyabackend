@@ -24,8 +24,8 @@ const mentorsRouter = require("./routers/mentors");
 const menteesRouter = require("./routers/mentees");
 
 //routes
-// app.use(authJwt());
-// app.use(errorHandler);
+app.use(authJwt());
+app.use(errorHandler);
 app.use("/mentor", mentorsRouter);
 app.use("/mentee", menteesRouter);
 

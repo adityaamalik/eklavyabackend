@@ -8,8 +8,11 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const sgMail = require("@sendgrid/mail");
 const { Badge } = require("../models/badge");
-
+const { Mentor } = require("../models/mentor");
+require("dotenv/config");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 router.get(`/`, async (req, res) => {
   const menteeList = await Mentee.find().select("-password").sort({ date: -1 });
   if (!menteeList) {
@@ -47,6 +50,22 @@ router.get("/badges/:id", async (req, res) => {
   }
   Badge.find(filter)
     .populate("mentor mentee")
+    .then((user) => {
+      res.json(user);
+    });
+});
+
+router.get("/review/:id", async (req, res) => {
+  Mentee.findOne({ _id: req.params.id })
+    .populate({
+      path: "review",
+      populate: [
+        {
+          path: "mentor",
+          model: "Mentor",
+        },
+      ],
+    })
     .then((user) => {
       res.json(user);
     });
@@ -149,6 +168,40 @@ router.post("/meeting/:id", async (req, res) => {
   });
   meeting = await meeting.save();
   if (!meeting) return res.send("the meeting cannot be created!");
+  const mentor = await Mentor.findById(mentorid);
+  const mentee = await Mentee.findById(menteeid);
+  // console.log(mentor.email);
+  // console.log(mentee);
+  // if (meeting) {
+  //   const msg = {
+  //     to: mentor.email, // Change to your recipient
+  //     from: "docsrecordmail@gmail.com", // Change to your verified sender
+  //     subject: "Meeting Inviation by " + mentee.name,
+  //     html: `
+  //     <div>
+  //       Hello ${mentor.name},
+  //       <br />
+  //       <br />
+  //       Message <strong> ${req.body.message}.</strong>
+  //       <br />
+  //       <br />
+  //       Date <strong> ${req.body.date}.</strong>
+  //       <br />
+  //       <br />
+  //       Link <strong> ${req.body.url}.</strong>
+  //       <br />
+  //       Have a Great day. Regards.
+  //     </div>`,
+  //   };
+  //   sgMail
+  //     .send(msg)
+  //     .then(() => {
+  //       console.log("Email sent");
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //     });
+  // }
   res.send(meeting);
 });
 
@@ -212,11 +265,8 @@ router.post("/register", async (req, res) => {
 
 // for skills
 router.put("/skills/:id", async (req, res) => {
-  const menteeA = await Mentee.findById(req.params.id);
-  const skillsArray = menteeA.skilla;
-  skillsArray.push(req.body.skills);
   let params = {
-    skills: skillsArray,
+    skills: req.body.skills,
   };
   for (let prop in params) if (!params[prop]) delete params[prop];
   const mentee = await Mentee.findByIdAndUpdate(req.params.id, params, {
@@ -314,7 +364,7 @@ router.post("/question/:id", async (req, res) => {
     question = await question.save();
     if (!question) return res.send("the answer cannot be created!");
     res.send(question);
-  } else res.send("No coins");
+  } else res.status(401).json({ message: "Not enough coins" });
 });
 
 router.put("/answer/accept/:id", async (req, res) => {
@@ -394,6 +444,7 @@ router.put("/:id", async (req, res) => {
     email: req.body.email,
     name: req.body.name,
     qualifications: req.body.qualifications,
+    profileurl: req.body.profileurl,
     profileHeading: req.body.profileHeading,
     profileDescription: req.body.profileDescription,
   };

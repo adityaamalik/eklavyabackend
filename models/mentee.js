@@ -14,6 +14,9 @@ const menteeSchema = mongoose.Schema({
 
     required: true,
   },
+  profileurl: {
+    type: String,
+  },
   qualifications: {
     type: String,
     default: "",
@@ -47,23 +50,9 @@ const menteeSchema = mongoose.Schema({
       type: String,
     },
   ],
-  skills: [
-    {
-      name: {
-        type: String,
-      },
-      endorseCount: {
-        type: Number,
-        default: 0,
-      },
-      endorseBy: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Mentor",
-        },
-      ],
-    },
-  ],
+  skills: {
+    type: String,
+  },
 
   review: [
     {

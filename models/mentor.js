@@ -51,24 +51,9 @@ const mentorSchema = mongoose.Schema({
     },
   ],
 
-  skills: [
-    {
-      name: {
-        type: String,
-      },
-      endorseCount: {
-        type: Number,
-        default: 0,
-      },
-      endorseBy: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Mentee",
-        },
-      ],
-    },
-  ],
-
+  skills: {
+    type: String,
+  },
   review: [
     {
       message: {
@@ -76,6 +61,7 @@ const mentorSchema = mongoose.Schema({
       },
       mentee: {
         type: mongoose.Schema.Types.ObjectId,
+        ref: "Mentee",
       },
     },
   ],

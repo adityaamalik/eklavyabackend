@@ -47,6 +47,21 @@ router.get("/badges/:id", async (req, res) => {
   res.send(BadgesList);
 });
 
+router.get("/review/:id", async (req, res) => {
+  Mentor.findOne({ _id: req.params.id })
+    .populate({
+      path: "review",
+      populate: [
+        {
+          path: "mentee",
+          model: "Mentee",
+        },
+      ],
+    })
+    .then((user) => {
+      res.json(user);
+    });
+});
 router.get("/invite/:id", async (req, res) => {
   let filter = {};
   if (req.params.id) {
@@ -83,11 +98,11 @@ router.get("/meeting/:id", async (req, res) => {
   if (req.params.id) {
     filter = { mentor: req.params.id };
   }
-  const meetingList = await Meeting.find(filter).sort({ date: -1 });
-  if (!meetingList) {
-    res.json({ success: false });
-  }
-  res.send(meetingList);
+  Meeting.find(filter)
+    .populate("mentor mentee")
+    .then((user) => {
+      res.json(user);
+    });
 });
 
 router.get("/query/:id", async (req, res) => {
@@ -275,11 +290,8 @@ router.put("/invite/accept/:id", async (req, res) => {
 
 // for skills
 router.put("/skills/:id", async (req, res) => {
-  const mentorA = await Mentor.findById(req.params.id);
-  const skillsArray = mentorA.skilla;
-  skillsArray.push(req.body.skills);
   let params = {
-    skills: skillsArray,
+    skills: req.body.skills,
   };
   for (let prop in params) if (!params[prop]) delete params[prop];
   const mentor = await Mentor.findByIdAndUpdate(req.params.id, params, {
@@ -408,7 +420,7 @@ router.post("/badges/:id", uploadOptions.single("image"), async (req, res) => {
     badge = await badge.save();
     if (!badge) return res.send("the answer cannot be created!");
     res.send(badge);
-  } else res.send("Not enough coins");
+  } else res.status(401).json({ message: "Not Enough coins" });
 });
 
 router.put("/badges/:id", async (req, res) => {
