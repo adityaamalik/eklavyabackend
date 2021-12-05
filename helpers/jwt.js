@@ -14,7 +14,7 @@ function authJwt() {
       `/`,
       `/mentor/login`,
       `/mentor/register`,
-      `/mentor/category/6198e265da2c0d17668aec19`,
+      `/mentor/category`,
     ],
   });
 }
