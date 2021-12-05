@@ -15,7 +15,11 @@ const multer = require("multer");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const sgMail = require("@sendgrid/mail");
 
+require("dotenv/config");
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/uploads");
@@ -194,6 +198,40 @@ router.post("/meeting/:id", async (req, res) => {
   });
   meeting = await meeting.save();
   if (!meeting) return res.send("the Meeting cannot be created!");
+  const mentor = await Mentor.findById(mentorid);
+  const mentee = await Mentee.findById(menteeid);
+  console.log(mentor.email);
+  console.log(mentee);
+  if (meeting) {
+    const msg = {
+      to: mentee.email, // Change to your recipient
+      from: "aditya.malik.cs.2018@miet.ac.in", // Change to your verified sender
+      subject: "Eklavya: Meeting Inviation by " + mentor.name,
+      html: `
+      <div>
+        Hello ${mentee.name},
+        <br />
+        <br />
+        Message <strong> ${req.body.message}.</strong>
+        <br />
+        <br />
+        Date <strong> ${req.body.date}.</strong>
+        <br />
+        <br />
+        Link <strong> ${req.body.url}.</strong>
+        <br />
+        Have a Great day. Regards, Eklavya Team.
+      </div>`,
+    };
+    sgMail
+      .send(msg)
+      .then(() => {
+        console.log("Email sent");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
   res.send(meeting);
 });
 
